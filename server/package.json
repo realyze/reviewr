@@ -1,0 +1,24 @@
+{
+  "name": "application-name",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "3.4.8",
+    "jade": "*",
+    "express.io": "~1.1.13",
+    "coffee-script": "~1.6.3",
+    "q": "~1.0.0",
+    "superagent": "~0.16.0",
+    "request": "~2.33.0",
+    "grunt": "~0.4.2",
+    "grunt-env": "~0.4.1",
+    "grunt-express-server": "~0.4.11",
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt-mocha-test": "~0.8.2",
+    "underscore": "~1.5.2",
+    "moment": "~2.5.0"
+  }
+}
