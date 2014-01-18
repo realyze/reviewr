@@ -66,7 +66,11 @@ module.exports = {
     js: [
       'vendor/jquery/jquery.js',
       'vendor/q/q.js',
+      'vendor/d3/d3.js',
+      'vendor/nvd3/nv.d3.js',
+      'vendor/nvd3/nv.d3.css',
       'vendor/angular/angular.js',
+      'vendor/angularjs-nvd3-directives/dist/angularjs-nvd3-directives.js',
       'vendor/angular-bootstrap/ui-bootstrap-tpls.min.js',
       'vendor/angular-ui-router/release/angular-ui-router.js',
       'vendor/angular-ui-utils/modules/route/route.js',
@@ -76,6 +80,7 @@ module.exports = {
       'vendor/angles/lib/angles.js'
     ],
     css: [
+      'vendor/nvd3/nv.d3.css',
     ],
     assets: [
     ]

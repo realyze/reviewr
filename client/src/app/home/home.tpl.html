@@ -2,9 +2,27 @@
   data
 
   <canvas id="myChart" width="600" height="400"></canvas>
+  <!--canvas id="stepsTimeAvg" width="400" height="400"></canvas>
+  <canvas id="stepsTimeMedian" width="400" height="400"></canvas-->
 
   {{avg}}
 
-  <div id="date-range-slider"></div>
+  <div>
+    <nvd3-pie-chart
+    	data="avgData"
+      id="donutLabelsOutsideExample"
+      noData="Data aint here"
+      width="550"
+      height="350"
+      x="xFunction()"
+      y="yFunction()"
+      donut="true"
+      showLabels="true"
+      color="colorFunction()"
+      donutLabelsOutside="true"
+      tooltips="true">
+      <svg height="250"></svg>
+    </nvd3-pie-chart>
+  </div>
 
 </div>

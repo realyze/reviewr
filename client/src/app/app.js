@@ -4,7 +4,9 @@ angular.module( 'ngBoilerplate', [
   'ngBoilerplate.home',
   'ngBoilerplate.about',
   'ui.router',
-  'ui.route'
+  'ui.route',
+
+  'nvd3ChartDirectives'
 ])
 
 .config( function myAppConfig ( $stateProvider, $urlRouterProvider ) {

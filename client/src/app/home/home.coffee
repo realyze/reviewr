@@ -84,27 +84,85 @@ angular.module("ngBoilerplate.home", [
       })
 
       $scope.avg = {}
-      sample = _.shuffle(data.review_requests)[0..10]
+      $scope.median = {}
+
+      sample = _.shuffle(data.review_requests)[0..30]
+
+      getStats = (list) ->
+        average = _.reduce(list, ((m,n)->m+n), 0) / list.length
+        median = (_.sortBy list, (val) -> val)[Math.floor(list.length/2)]
+        return {
+          average: average
+          median: median
+        }
 
       getAverageTimes(sample)
+
       .then (data) ->
         for r, i in sample
           data[i].created or= timestamp: moment(r.time_added)
         data
 
-
       .then (data) ->
-        calcStep = (f1, f2, f3) ->
-        createdToShipited = (for d in data when d.ship_it?
+        withRev = (d for d in data when d.reviews.length > 0 or d.ship_it?)
+        ttRev = (for d in withRev
           created = moment(d.created.timestamp)
-          ship_ited = moment(d.ship_it.timestamp)
-          ship_ited.diff created, 'hours'
+          firstRev = moment(d.reviews[0]?.timestamp or d.ship_it.timestamp)
+          Math.abs firstRev.diff created, 'hours'
         )
 
-        sum = _.reduce(createdToShipited, ((m,n)->m+n), 0)
-        average = sum / createdToShipited.length
+        {average, median} = getStats(ttRev)
+        $scope.avg.timeToRev = average
+        $scope.median.timeToRev = median
 
-        $scope.avg.timeToShipIt =average
+
+        withRev = (d for d in data when d.reviews.length > 0 and d.ship_it?)
+        diffRevToShipit = (for d in withRev
+          firstRev = moment(d.reviews[0].timestamp)
+          shipit = moment(d.ship_it.timestamp)
+          Math.abs shipit.diff firstRev, 'hours'
+        )
+
+        {average, median} = getStats(diffRevToShipit)
+        $scope.avg.revToShipit = average
+        $scope.median.revToShipit = median
+
+
+        submitted = (d for d in data when d.ship_it? and d.submitted?)
+        shipitToSubmit = (for d in submitted
+          shipit = moment(d.ship_it.timestamp)
+          submit = moment(d.submitted.timestamp)
+          Math.abs submit.diff shipit, 'hours'
+        )
+
+        {average, median} = getStats(shipitToSubmit)
+        $scope.avg.shipToSubmit = average
+        $scope.median.shipToSubmit = median
+
+        console.log 'graph data ready'
+
+      .then ->
+        console.log 'doughnut graphs'
+        fields = ['timeToRev', 'revToShipit', 'shipToSubmit']
+        colors = ['#F7464A', '#E2EAE9', '#D4CCC5']
+
+        $scope.avgData = (for [v,c] in _.zip(fields, colors)
+          {key: v, y: $scope.avg[v]})
+
+        $scope.xFunction = -> (d) -> d.key
+        $scope.yFunction = -> (d) -> d.y
+
+        colorArray = [
+          '#F7464A', '#E2EAE9', '#D4CCC5', '#FF6666',
+          '#FF3333', '#FF6666', '#FFE6E6'
+        ]
+        $scope.colorFunction = -> (d, i) -> colorArray[i]
+
+        $scope.toolTipContentFunction = -> (key, x, y, e, graph) ->
+          "#{key}: #{y}"
+
+        console.log 'dougnnut', data
+
 
       .then ->
         $scope.$apply()
