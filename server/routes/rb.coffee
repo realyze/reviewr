@@ -63,8 +63,8 @@ submitted
 ###
 
 
-UNAME = 'statistics.daemon'
-PWD = 'paWApu2E'
+UNAME = process.env['RB_USER']
+PWD = process.env['RB_PWD']
 
 
 getReviewRequestDetails = (rid, resource) ->
