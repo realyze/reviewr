@@ -19,7 +19,12 @@
     "d3": "~3.4.1",
     "nvd3": "~1.1.15-beta",
     "angularjs-nvd3-directives": "~0.0.5-beta",
-    "bootswatch": "~3.0.3+1",
+    "bootswatch": "3.0.3+1",
     "angular-placeholders": "*"
+  },
+  "resolutions": {
+    "angular": "1.2.9",
+    "d3": "~3.4.1",
+    "nvd3": "~1.1.15-beta"
   }
 }
