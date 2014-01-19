@@ -156,7 +156,7 @@ angular.module("ngBoilerplate.home", [
 
         $scope.avgData = (for v in fields
           {key: v, y: $scope.avg[v]})
-        $scope.meanData = (for v in fields
+        $scope.medianData = (for v in fields
           {key: v, y: $scope.median[v]})
 
         $scope.xFunction = -> (d) -> d.key
