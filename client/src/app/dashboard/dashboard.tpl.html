@@ -1,6 +1,21 @@
 <div class="container dashboard">
 
-  <div class="col-md-10">
+  <div class="loader" ng-hide="data">
+    <div class="duo duo1">
+      <div class="dot dot-a"></div>
+      <div class="dot dot-b"></div>
+    </div>
+    <div class="duo duo2">
+      <div class="dot dot-a"></div>
+      <div class="dot dot-b"></div>
+    </div>
+    <div class="spinner-legend">
+      <h4>Requesting data from the server...</h4>
+      <h5>(If you used the 'all' route, this might take a minute)</h5>
+    </div>
+  </div>
+
+  <div class="col-md-10" ng-show="data">
 
     <div class="panel panel-default">
       
@@ -86,6 +101,17 @@
               </div>
               <div>
                 <div>Worst: {{avg.worst[field][0]}} (<a href="https://review.salsitasoft.com/r/{{avg.worst[field][1].id}}/">r{{avg.worst[field][1].id}}</a>)</div>
+              </div>
+              <div ng-controller="StepDetailsCtrl">
+                <button class="btn btn-default" ng-click="isCollapsed = !isCollapsed">See the data...</button>
+                <hr>
+                <div collapse="isCollapsed">
+                  <div class="well well-lg">
+                    <span ng-repeat="step in steps[field]">
+                      <a href="https://review.salsitasoft.com/r/{{step[1].id}}">{{step[0]}}</a>
+                    </span>
+                  </div> 
+                </div>
               </div>
             </div>
           </div>

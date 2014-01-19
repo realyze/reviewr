@@ -20,8 +20,7 @@ angular.module("reviewr.dashboard", [
 .controller "DashboardCtrl", ($scope, $http, $log,
   $stateParams, statsService) ->
 
-  $scope.data = 'waiting'
-
+  $scope.data = null
 
   orderStatsByYearAndMonth = (data, field) ->
     byYear = _.groupBy data, (req) ->
@@ -84,6 +83,8 @@ angular.module("reviewr.dashboard", [
       $scope.median.best = {}
       $scope.median.worst = {}
 
+      $scope.steps = {}
+
       console.log 'data length', data.length
       nSamples = Math.min Math.ceil(data.length/SAMPLE_COEF), 50
       sample = _.shuffle(data)[0..nSamples]
@@ -139,13 +140,14 @@ angular.module("reviewr.dashboard", [
           created = moment(d.created.timestamp)
           firstRev = moment(d.reviews[0]?.timestamp or d.ship_it.timestamp)
           console.log 'diffing', created.format(), firstRev.format()
-          Math.abs firstRev.diff created, 'hours'
+          Math.max Math.abs(firstRev.diff created, 'hours'), 1
         )
 
         $log.debug 'ttRev', ttRev
         $log.debug 'withRev', withRev
 
         {average, median} = getStats(ttRev)
+        $scope.steps.timeToRev = _.zip ttRev, withRev
         $scope.avg.timeToRev = average
         $scope.median.timeToRev = median
         {max, min} = statsService.calculateExtremes(withRev, ttRev)
@@ -156,13 +158,14 @@ angular.module("reviewr.dashboard", [
         diffRevToShipit = (for d in withRev
           firstRev = moment(d.reviews[0].timestamp)
           shipit = moment(d.ship_it.timestamp)
-          Math.abs shipit.diff firstRev, 'hours'
+          Math.max Math.abs(shipit.diff firstRev, 'hours'), 1
         )
 
         $log.debug 'diffRevToShipit', diffRevToShipit
         $log.debug 'withRev', withRev
 
         {average, median} = getStats(diffRevToShipit)
+        $scope.steps.revToShipit = _.zip diffRevToShipit, withRev
         $scope.avg.revToShipit = average
         $scope.median.revToShipit = median
         {max, min} = statsService.calculateExtremes(withRev, diffRevToShipit)
@@ -174,13 +177,14 @@ angular.module("reviewr.dashboard", [
         shipitToSubmit = (for d in submitted
           shipit = moment(d.ship_it.timestamp)
           submit = moment(d.submitted.timestamp)
-          Math.abs submit.diff shipit, 'hours'
+          Math.max Math.abs(submit.diff shipit, 'hours'), 1
         )
 
         $log.debug 'shipitToSubmit', shipitToSubmit
         $log.debug 'withRev', submitted
 
         {average, median} = getStats(shipitToSubmit)
+        $scope.steps.shipToSubmit = _.zip shipitToSubmit, submitted
         $scope.avg.shipToSubmit = average or 0
         $scope.median.shipToSubmit = median or 0
         {max, min} = statsService.calculateExtremes(submitted, shipitToSubmit)
@@ -224,4 +228,5 @@ angular.module("reviewr.dashboard", [
     'ship it to submit'
   ]
 
-
+.controller 'StepDetailsCtrl', ($scope) ->
+  $scope.isCollapsed = true
