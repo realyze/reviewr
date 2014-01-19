@@ -1,3 +1,5 @@
+# coffeelint: disable=max_line_length
+
 angular.module("ngBoilerplate.home", [
   'ui.router'
 ])
@@ -37,7 +39,7 @@ angular.module("ngBoilerplate.home", [
 
 
   getReview = (rid) ->
-    console.log 'getting review for', rid
+    #console.log 'getting review for', rid
     dfr = Q.defer()
     $http.get("api/review/#{rid}")
     
@@ -51,8 +53,19 @@ angular.module("ngBoilerplate.home", [
 
 
   getAverageTimes = (data) ->
-    Q.all((getReview(review.id) for review in data))
+    dfr = Q.defer()
+    qReviews = (getReview(review.id) for review in data)
+    index = 0
+    for r in qReviews
+      r.then ->
+        dfr.notify(index++ / (qReviews.length - 1))
+    Q.all(qReviews).then dfr.resolve, dfr.reject
+    return dfr.promise
 
+
+  N_SAMPLE_REVIEWS = 50
+
+  $scope.avgProgress = 0
 
   $http.get("api/stats/#{$stateParams.user}")
     .success (data) ->
@@ -60,33 +73,12 @@ angular.module("ngBoilerplate.home", [
       $scope.data = orderStatsByYearAndMonth(data, 'time_added')
       console.log 'data', $scope.data
 
-      graphData =
-        labels : [
-          "January","February","March",
-          "April","May","June",
-          "July", "August", "September",
-          "October", "November", "December"
-        ],
-        datasets : [
-          fillColor : "rgba(220,220,220,0.5)",
-          strokeColor : "rgba(220,220,220,1)",
-          data : (r.length for m, r of $scope.data['2013'])
-        ]
-      $scope.graphData = graphData
-      console.log graphData
-
-      ctx = angular.element("#myChart").get(0).getContext("2d")
-      new Chart(ctx).Bar(graphData, {
-        scaleOverride: true
-        scaleSteps: 8
-        scaleStepWidth: 5
-        scaleStartValue: 0
-      })
+      $scope.years = ['2013']
 
       $scope.avg = {}
       $scope.median = {}
 
-      sample = _.shuffle(data.review_requests)[0..30]
+      sample = _.shuffle(data.review_requests)[0..N_SAMPLE_REVIEWS]
 
       getStats = (list) ->
         average = _.reduce(list, ((m,n)->m+n), 0) / list.length
@@ -96,8 +88,28 @@ angular.module("ngBoilerplate.home", [
           median: median
         }
 
-      getAverageTimes(sample)
+      monthLabels = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+      ]
 
+      $scope.xAxisTickFormatFunction = -> (d) -> monthLabels[d]
+      $scope.valueFormatFunction = -> (d) -> d3.round(d)
+      $scope.reviewByMonth = {}
+      for y in $scope.years
+        $scope.reviewByMonth[y] = [{
+          key: '#reviews'
+          values: _.zip([0..11], (r.length for m, r of $scope.data[y]))
+        }]
+
+      qAvg = getAverageTimes(sample)
+
+      $scope.avgProgress = 0
+      qAvg.progress (perc) ->
+        $scope.avgProgress = perc * 100
+        $scope.$apply()
+
+      qAvg
       .then (data) ->
         for r, i in sample
           data[i].created or= timestamp: moment(r.time_added)
@@ -136,18 +148,16 @@ angular.module("ngBoilerplate.home", [
         )
 
         {average, median} = getStats(shipitToSubmit)
-        $scope.avg.shipToSubmit = average
-        $scope.median.shipToSubmit = median
-
-        console.log 'graph data ready'
+        $scope.avg.shipToSubmit = average or 0
+        $scope.median.shipToSubmit = median or 0
 
       .then ->
-        console.log 'doughnut graphs'
         fields = ['timeToRev', 'revToShipit', 'shipToSubmit']
-        colors = ['#F7464A', '#E2EAE9', '#D4CCC5']
 
-        $scope.avgData = (for [v,c] in _.zip(fields, colors)
+        $scope.avgData = (for v in fields
           {key: v, y: $scope.avg[v]})
+        $scope.meanData = (for v in fields
+          {key: v, y: $scope.median[v]})
 
         $scope.xFunction = -> (d) -> d.key
         $scope.yFunction = -> (d) -> d.y
@@ -160,9 +170,6 @@ angular.module("ngBoilerplate.home", [
 
         $scope.toolTipContentFunction = -> (key, x, y, e, graph) ->
           "#{key}: #{y}"
-
-        console.log 'dougnnut', data
-
 
       .then ->
         $scope.$apply()

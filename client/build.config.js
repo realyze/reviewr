@@ -68,7 +68,6 @@ module.exports = {
       'vendor/q/q.js',
       'vendor/d3/d3.js',
       'vendor/nvd3/nv.d3.js',
-      'vendor/nvd3/nv.d3.css',
       'vendor/angular/angular.js',
       'vendor/angularjs-nvd3-directives/dist/angularjs-nvd3-directives.js',
       'vendor/angular-bootstrap/ui-bootstrap-tpls.min.js',
@@ -77,7 +76,10 @@ module.exports = {
       'vendor/chartjs/Chart.js',
       'vendor/momentjs/moment.js',
       'vendor/underscore/underscore.js',
-      'vendor/angles/lib/angles.js'
+      'vendor/angles/lib/angles.js',
+
+      'vendor/nvd3/nv.d3.css',
+      'vendor/bootswatch/cosmo/bootstrap.css'
     ],
     css: [
       'vendor/nvd3/nv.d3.css',

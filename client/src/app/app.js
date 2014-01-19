@@ -6,6 +6,8 @@ angular.module( 'ngBoilerplate', [
   'ui.router',
   'ui.route',
 
+  'ui.bootstrap',
+
   'nvd3ChartDirectives'
 ])
 
