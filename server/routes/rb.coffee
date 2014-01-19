@@ -8,16 +8,19 @@ sa = require 'superagent'
 exports.setup = (app) ->
 
   app.get '/api/stats/:user', (req, res, next) ->
-    if req.params['user'] == 'all'
-      qData = getReviewRequestsForUser()
-    else
-      qData = getReviewRequestsForUser(req.params['user'])
+    params = {
+      'time-added-to': '2014-01-01T12:00:00+01:00'
+      'time-added-from': '2013-01-01T12:00:00+01:00'
+    }
+    if req.params['user'] != 'all'
+      params['from-user'] = req.params['user']
+
+    qData = getReviewRequests(params)
 
     qData
       .then (data) ->
-        if _.isString(data)
-          data = JSON.parse data
-        console.log 'data', data.review_requests.length, data
+        console.log 'RB data received'
+        console.log 'data', data.length, data
         res.json data
       .fail (err) ->
         console.error err
@@ -32,7 +35,7 @@ exports.setup = (app) ->
         #console.log 'review details r', reviews
         #console.log 'review details c', changes
 
-        revs = ({timestamp, ship_it} for {timestamp, ship_it} in reviews)
+        revs = ({timestamp, ship_it, user: links.user.title} for {timestamp, ship_it, links} in reviews)
         shipItRev = _.findWhere revs, ship_it: true
         revs = _.without revs, shipItRev
 
@@ -79,26 +82,45 @@ getReviewRequestDetails = (rid, resource) ->
   return deferred.promise
 
 
-getReviewRequestsForUser = (user) ->
-  deferred = Q.defer()
+qGet = (url) ->
+  dfr = Q.defer()
+  request.get url, {json:true},
+    (e, r, data) ->
+      if e then return dfr.reject(e)
+      dfr.resolve data
+  dfr.promise
 
-  qs = {
+
+getReviewRequests = (params) ->
+  qsDefs = {
     'status': 'all'
     'max-results': '200'
-    'time-added-to': '2014-01-01T12:00:00+01:00' #moment().subtract('weeks', 5).format()
   }
-  if user?
-    qs['from-user'] = user
+  qDict = _.defaults params, qsDefs
 
-  qs = _.reduce qs, (res, val, key) ->
+  dictToQS = (dict) -> _.reduce dict, (res, val, key) ->
     "#{res}&#{key}=#{val}"
   , ""
 
-  console.log 'qs', qs
+  console.log 'qs', dictToQS(qDict)
 
-  request.get "https://#{UNAME}:#{PWD}@review.salsitasoft.com/api/review-requests/?#{qs}",
-    (e, r, data) ->
-      if e then return deferred.reject(e)
-      deferred.resolve data
+  qGet("https://#{UNAME}:#{PWD}@review.salsitasoft.com/api/review-requests/?#{dictToQS(qDict)}")
 
-  return deferred.promise
+    .then (data) ->
+      console.log 'total res', data.total_results
+      qReqs = (for i in [0..Math.floor(data.total_results/200)] #when i % 2 == 0
+        qDict.start = i * 200
+        console.log 'GET, start', qDict.start
+        do (i) ->
+          qGet("https://#{UNAME}:#{PWD}@review.salsitasoft.com/api/review-requests/?#{dictToQS(qDict)}")
+            .then (data) ->
+              console.log 'finished request', i
+              data
+      )
+      Q.all(qReqs)
+
+    .then (reqs) ->
+      res = []
+      for req in reqs
+        res = res.concat req.review_requests
+      return res

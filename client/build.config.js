@@ -79,10 +79,10 @@ module.exports = {
       'vendor/angles/lib/angles.js',
 
       'vendor/nvd3/nv.d3.css',
-      'vendor/bootswatch/cosmo/bootstrap.css'
+      'vendor/bootswatch/yeti/bootstrap.css'
     ],
     css: [
-      'vendor/nvd3/nv.d3.css',
+      'vendor/bootswatch/yeti/bootstrap.css'
     ],
     assets: [
     ]

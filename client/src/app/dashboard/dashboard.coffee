@@ -1,7 +1,8 @@
 # coffeelint: disable=max_line_length
 
-angular.module("ngBoilerplate.home", [
+angular.module("reviewr.dashboard", [
   'ui.router'
+  'reviewr.dashboard.stats'
 ])
   
   
@@ -10,20 +11,20 @@ angular.module("ngBoilerplate.home", [
     url: "/stats/:user"
     views:
       main:
-        controller: "UserStatsCtrl"
-        templateUrl: "home/home.tpl.html"
-
+        controller: "DashboardCtrl"
+        templateUrl: "dashboard/dashboard.tpl.html"
     data:
-      pageTitle: "User Stats"
+      pageTitle: "Dashboard"
 
 
-.controller "UserStatsCtrl", ($scope, $http, $log, $stateParams) ->
-  $log.debug 'home ctrl'
+.controller "DashboardCtrl", ($scope, $http, $log,
+  $stateParams, statsService) ->
+
   $scope.data = 'waiting'
 
 
   orderStatsByYearAndMonth = (data, field) ->
-    byYear = _.groupBy data.review_requests, (req) ->
+    byYear = _.groupBy data, (req) ->
       moment(req[field]).year()
 
     byYearAndMonth = {}
@@ -63,7 +64,7 @@ angular.module("ngBoilerplate.home", [
     return dfr.promise
 
 
-  N_SAMPLE_REVIEWS = 50
+  SAMPLE_COEF = 4
 
   $scope.avgProgress = 0
 
@@ -76,9 +77,17 @@ angular.module("ngBoilerplate.home", [
       $scope.years = ['2013']
 
       $scope.avg = {}
-      $scope.median = {}
+      $scope.avg.best = {}
+      $scope.avg.worst = {}
 
-      sample = _.shuffle(data.review_requests)[0..N_SAMPLE_REVIEWS]
+      $scope.median = {}
+      $scope.median.best = {}
+      $scope.median.worst = {}
+
+      console.log 'data length', data.length
+      nSamples = Math.min Math.ceil(data.length/SAMPLE_COEF), 50
+      sample = _.shuffle(data)[0..nSamples]
+      $scope.nSamples = nSamples
 
       getStats = (list) ->
         average = _.reduce(list, ((m,n)->m+n), 0) / list.length
@@ -106,13 +115,22 @@ angular.module("ngBoilerplate.home", [
 
       $scope.avgProgress = 0
       qAvg.progress (perc) ->
-        $scope.avgProgress = perc * 100
+        $scope.avgProgress = Math.ceil(perc * 100)
         $scope.$apply()
 
       qAvg
       .then (data) ->
         for r, i in sample
           data[i].created or= timestamp: moment(r.time_added)
+          data[i].user or= r.links.submitter.title
+        data
+
+      # Filter out annotations.
+      # TODO: This filters out *all* the submitter's comments.
+      .then (data) ->
+        for d in data
+          d.reviews = _.reject d.reviews, (rev) ->
+            rev.user == d.user
         data
 
       .then (data) ->
@@ -120,13 +138,19 @@ angular.module("ngBoilerplate.home", [
         ttRev = (for d in withRev
           created = moment(d.created.timestamp)
           firstRev = moment(d.reviews[0]?.timestamp or d.ship_it.timestamp)
+          console.log 'diffing', created.format(), firstRev.format()
           Math.abs firstRev.diff created, 'hours'
         )
+
+        $log.debug 'ttRev', ttRev
+        $log.debug 'withRev', withRev
 
         {average, median} = getStats(ttRev)
         $scope.avg.timeToRev = average
         $scope.median.timeToRev = median
-
+        {max, min} = statsService.calculateExtremes(withRev, ttRev)
+        $scope.avg.worst.timeToRev = max
+        $scope.avg.best.timeToRev = min
 
         withRev = (d for d in data when d.reviews.length > 0 and d.ship_it?)
         diffRevToShipit = (for d in withRev
@@ -135,9 +159,15 @@ angular.module("ngBoilerplate.home", [
           Math.abs shipit.diff firstRev, 'hours'
         )
 
+        $log.debug 'diffRevToShipit', diffRevToShipit
+        $log.debug 'withRev', withRev
+
         {average, median} = getStats(diffRevToShipit)
         $scope.avg.revToShipit = average
         $scope.median.revToShipit = median
+        {max, min} = statsService.calculateExtremes(withRev, diffRevToShipit)
+        $scope.avg.worst.revToShipit = max
+        $scope.avg.best.revToShipit = min
 
 
         submitted = (d for d in data when d.ship_it? and d.submitted?)
@@ -147,12 +177,23 @@ angular.module("ngBoilerplate.home", [
           Math.abs submit.diff shipit, 'hours'
         )
 
+        $log.debug 'shipitToSubmit', shipitToSubmit
+        $log.debug 'withRev', submitted
+
         {average, median} = getStats(shipitToSubmit)
         $scope.avg.shipToSubmit = average or 0
         $scope.median.shipToSubmit = median or 0
+        {max, min} = statsService.calculateExtremes(submitted, shipitToSubmit)
+        $scope.avg.worst.shipToSubmit = max
+        $scope.avg.best.shipToSubmit = min
 
       .then ->
         fields = ['timeToRev', 'revToShipit', 'shipToSubmit']
+        labels = _.object fields, [
+          'created to 1st review (or ship it)',
+          '1st review to ship it',
+          'ship it to submit'
+        ]
 
         $scope.avgData = (for v in fields
           {key: v, y: $scope.avg[v]})
@@ -169,9 +210,18 @@ angular.module("ngBoilerplate.home", [
         $scope.colorFunction = -> (d, i) -> colorArray[i]
 
         $scope.toolTipContentFunction = -> (key, x, y, e, graph) ->
-          "#{key}: #{y}"
+          "#{labels[key]}: #{y.value} h"
 
       .then ->
         $scope.$apply()
+
+
+.controller 'stepDetailsCtrl', ($scope) ->
+  $scope.fields = ['timeToRev', 'revToShipit', 'shipToSubmit']
+  $scope.labels = _.object $scope.fields, [
+    'created to 1st review (or ship it)',
+    '1st review to ship it',
+    'ship it to submit'
+  ]
 
 
