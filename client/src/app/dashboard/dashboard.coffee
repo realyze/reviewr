@@ -4,10 +4,20 @@ angular.module("reviewr.dashboard", [
   'ui.router'
   'reviewr.dashboard.stats'
 ])
-  
-  
+
+
 .config ($stateProvider) ->
   $stateProvider.state "userStats",
+    url: "/stats/"
+    views:
+      main:
+        controller: "DashboardCtrl"
+        template: "<div><h3>please specify RB user or 'all' in the URL " +
+          "(e.g. <b>/stats/all</b> or <b>/stats/user.name</b>)</h3></div>"
+    data:
+      pageTitle: "Dashboard - no user"
+
+  $stateProvider.state "userStatsNoUser",
     url: "/stats/:user"
     views:
       main:
@@ -42,7 +52,7 @@ angular.module("reviewr.dashboard", [
     #console.log 'getting review for', rid
     dfr = Q.defer()
     $http.get("api/review/#{rid}")
-    
+
     .success (data) ->
       dfr.resolve data
 
@@ -63,7 +73,8 @@ angular.module("reviewr.dashboard", [
     return dfr.promise
 
 
-  SAMPLE_COEF = 4
+  SAMPLE_COEF = 3
+  MAX_SAMPLE_SIZE = 80
 
   $scope.avgProgress = 0
 
@@ -86,7 +97,7 @@ angular.module("reviewr.dashboard", [
       $scope.steps = {}
 
       console.log 'data length', data.length
-      nSamples = Math.min Math.ceil(data.length/SAMPLE_COEF), 50
+      nSamples = Math.min Math.ceil(data.length/SAMPLE_COEF), MAX_SAMPLE_SIZE
       sample = _.shuffle(data)[0..nSamples]
       $scope.nSamples = nSamples
 
@@ -200,9 +211,9 @@ angular.module("reviewr.dashboard", [
         ]
 
         $scope.avgData = (for v in fields
-          {key: v, y: $scope.avg[v]})
+          {key: v, y: Math.ceil($scope.avg[v])})
         $scope.medianData = (for v in fields
-          {key: v, y: $scope.median[v]})
+          {key: v, y: Math.ceil($scope.median[v])})
 
         $scope.xFunction = -> (d) -> d.key
         $scope.yFunction = -> (d) -> d.y
@@ -213,7 +224,7 @@ angular.module("reviewr.dashboard", [
         ]
         $scope.colorFunction = -> (d, i) -> colorArray[i]
 
-        $scope.toolTipContentFunction = -> (key, x, y, e, graph) ->
+        $scope.stepsTooltipFun = -> (key, x, y, e, graph) ->
           "#{labels[key]}: #{y.value} h"
 
       .then ->

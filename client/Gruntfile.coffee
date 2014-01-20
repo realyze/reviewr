@@ -7,7 +7,7 @@ module.exports = (grunt) ->
     files.filter (file) ->
       file.match /\.js$/
 
-  
+
   ###
   A utility function to get all app CSS sources.
   ###
@@ -221,9 +221,9 @@ module.exports = (grunt) ->
         configFile: "<%= build_dir %>/karma-unit.js"
 
       unit:
-        runnerPort: 9101
+        runnerPort: 9102
         background: true
-        port: 9877
+        port: 9878
 
       continuous:
         singleRun: true
@@ -301,7 +301,7 @@ module.exports = (grunt) ->
   grunt.registerTask "test", ["build", "karmaconfig", "karma:continuous"]
   grunt.registerTask "build", ["clean", "jade", "html2js", "jshint", "coffeelint", "coffee", "less:build", "copy:build_assets", "copy:build_appjs", "copy:build_vendorjs", "index:build"]
   grunt.registerTask "compile", ["less:compile", "copy:compile_assets", "ngmin", "concat", "uglify", "index:compile"]
-  
+
   ###
   The index.html template includes the stylesheet and javascript sources
   based on dynamic names calculated in this Gruntfile. This task assembles
@@ -329,7 +329,7 @@ module.exports = (grunt) ->
 
 
 
-  
+
   ###
   In order to avoid having to specify manually the files needed for karma to
   run, we use grunt to manage the list for us. The `karma/*` files are

@@ -11,7 +11,7 @@ angular.module( 'reviewr', [
 ])
 
 .config( function myAppConfig ( $stateProvider, $urlRouterProvider ) {
-  $urlRouterProvider.otherwise( '/home' );
+  $urlRouterProvider.otherwise( '/stats/' );
 })
 
 .run( function run () {

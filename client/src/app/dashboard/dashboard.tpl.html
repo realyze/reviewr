@@ -65,6 +65,8 @@
             showLabels="true"
             color="colorFunction()"
             donutLabelsOutside="true"
+            tooltipcontent="stepsTooltipFun()"
+            labelType="value"
             tooltips="true">
             <svg height="250"></svg>
           </nvd3-pie-chart>
@@ -82,6 +84,8 @@
             showLabels="true"
             color="colorFunction()"
             donutLabelsOutside="true"
+            labelType="value"
+            tooltipcontent="stepsTooltipFun()"
             tooltips="true">
             <svg height="250"></svg>
           </nvd3-pie-chart>
@@ -97,10 +101,10 @@
             <div>
               <h4>{{labels[field]}}</h5>
               <div>
-                <div>Best: {{avg.best[field][0]}} (<a href="https://review.salsitasoft.com/r/{{avg.best[field][1].id}}/">r{{avg.best[field][1].id}}</a>)</div>
+                <div>Best: {{avg.best[field][0]}} h (<a href="https://review.salsitasoft.com/r/{{avg.best[field][1].id}}/">r{{avg.best[field][1].id}}</a>)</div>
               </div>
               <div>
-                <div>Worst: {{avg.worst[field][0]}} (<a href="https://review.salsitasoft.com/r/{{avg.worst[field][1].id}}/">r{{avg.worst[field][1].id}}</a>)</div>
+                <div>Worst: {{avg.worst[field][0]}} h (<a href="https://review.salsitasoft.com/r/{{avg.worst[field][1].id}}/">r{{avg.worst[field][1].id}}</a>)</div>
               </div>
               <div ng-controller="StepDetailsCtrl">
                 <button class="btn btn-default" ng-click="isCollapsed = !isCollapsed">See the data...</button>
